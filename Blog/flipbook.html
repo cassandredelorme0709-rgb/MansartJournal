@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Flipbook</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+  <style>
+    /* Use site's global font and colors from index.css; keep only flipbook-specific rules */
+    :root{--flipbook-gap:12px}
+    .book-wrap{display:flex;flex-direction:column;align-items:center;margin-top:18px}
+    .book{width:85vw;max-width:900px;height:85vh;max-height:1100px;aspect-ratio:auto}
+    .page{width:100%;height:100%;position:relative;transition:transform 800ms ease;display:flex;align-items:center;justify-content:center}
+    .page img{width:100%;height:100%;object-fit:contain;border-radius:6px}
+    .page.flipping{transform:rotateY(-180deg)}
+    .controls{margin-top:12px;display:flex;gap:8px}
+    .note{max-width:700px;margin-top:12px;color:var(--muted,#555)}
+    /* Make control buttons follow site button style but stay compact */
+    .controls button{background-color:#f4f4f4;border:1px solid #ccc;border-radius:4px;padding:0.5rem 0.9rem;margin:0 4px;font-size:1rem;cursor:pointer;transition:background-color 0.2s}
+    .controls button:hover{background-color:#eaeaea}
+    body.dark-mode .controls button{background-color:#3a3a3a;border:1px solid #555;color:#eee}
+    body.dark-mode .controls button:hover{background-color:#4a4a4a}
+    @media (max-width:700px){.book{width:90vw;height:60vh;max-width:500px;max-height:600px}}
+  </style>
+</head>
+<body>
+  <header>
+    <button class="back-button" onclick="window.location.href='index.html'">← Retour</button>
+    <h1>Flipbook</h1>
+  </header>
+
+  <div class="book-wrap">
+    <div id="book" class="book">
+      <div id="page" class="page">
+        <img id="front" src="" alt="Page front">
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="prevBtn">Préc.</button>
+      <button id="nextBtn">Suiv.</button>
+    </div>
+
+  <script>
+    // Récupère paramètre book de l'URL
+    function getParam(name){
+      const params = new URLSearchParams(location.search);
+      return params.get(name);
+    }
+
+    const bookId = getParam('book') || '1';
+
+    // Définit le nombre de pages par livre et chemins conseillés
+    const PAGES_PER_BOOK = 4;
+    function imagesForBook(id){
+      // Le script va tenter des chemins locaux images/book{id}/N.jpg puis images/book{id}/N.svg
+      const list = [];
+      for(let i=1;i<=PAGES_PER_BOOK;i++){
+        list.push([`images/book${id}/${i}.jpg`, `images/book${id}/${i}.svg`]);
+      }
+      // fallback placeholders si les locaux ne sont pas trouvés
+      const placeholders = [];
+      for(let i=1;i<=PAGES_PER_BOOK;i++){
+        placeholders.push(`https://via.placeholder.com/600x800?text=Page+${i}`);
+      }
+      return {local:list, placeholders};
+    }
+
+    const {local:localImages, placeholders} = imagesForBook(bookId);
+    // Transforme en structure {candidates: [...], fallback}
+    let images = localImages.map((candidates,i)=>({candidates, fallback:placeholders[i]}));
+
+    const front = document.getElementById('front');
+    const page = document.getElementById('page');
+    const note = document.getElementById('note');
+
+    let idx = 0;
+
+    // Apply site theme (dark mode) if previously set
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+
+    function loadWithCandidates(imgElement, candidates, fallback){
+      let idxTry = 0;
+      function tryNext(){
+        if(idxTry >= candidates.length){
+          if(imgElement.src !== fallback) imgElement.src = fallback;
+          return;
+        }
+        imgElement.onerror = ()=>{ idxTry++; tryNext(); };
+        imgElement.src = candidates[idxTry];
+      }
+      tryNext();
+    }
+
+    function setImages(i){
+      if(images[i]){
+        loadWithCandidates(front, images[i].candidates, images[i].fallback);
+      } else {
+        front.src = placeholders[0];
+      }
+
+      page.style.transform = 'rotateY(0deg)';
+      note.textContent = `Livre ${bookId} — page ${i+1}/${Math.max(images.length,1)}`;
+    }
+
+    // Flip to next page
+    function next(){
+      if(idx >= images.length-1) return;
+      page.classList.add('flipping');
+      // Après animation, incrémente et repositionne
+      const onEnd = ()=>{
+        page.classList.remove('flipping');
+        idx = Math.min(idx+1, images.length-1);
+        setImages(idx);
+        page.removeEventListener('transitionend', onEnd);
+      };
+      page.addEventListener('transitionend', onEnd);
+      // Fallback si transitionend ne déclenche pas
+      setTimeout(()=>{ if(page.classList.contains('flipping')){ onEnd(); } }, 900);
+    }
+
+    function prev(){
+      if(idx <= 0) return;
+      // Pour revenir en arrière, on inverse l'animation (on joue la flip inverse)
+      page.classList.add('flipping');
+      const onEnd = ()=>{
+        page.classList.remove('flipping');
+        idx = Math.max(idx-1,0);
+        setImages(idx);
+        page.removeEventListener('transitionend', onEnd);
+      };
+      page.addEventListener('transitionend', onEnd);
+      setTimeout(()=>{ if(page.classList.contains('flipping')){ onEnd(); } }, 900);
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', next);
+    document.getElementById('prevBtn').addEventListener('click', prev);
+
+    // Initialisation
+    setImages(idx);
+
+    // Permet navigation clavier
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowRight') next();
+      if(e.key === 'ArrowLeft') prev();
+    });
+  </script>
+</body>
+</html>
