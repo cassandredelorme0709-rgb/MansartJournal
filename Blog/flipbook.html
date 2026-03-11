@@ -10,7 +10,7 @@
     /* Use site's global font and colors from index.css; keep only flipbook-specific rules */
     :root{--flipbook-gap:12px}
     .book-wrap{display:flex;flex-direction:column;align-items:center;margin-top:18px}
-    .book{width:85vw;max-width:900px;height:85vh;max-height:1100px;aspect-ratio:auto}
+    .book{width:85vw;max-width:900px;height:85vh;max-height:1100px;aspect-ratio:auto;touch-action:pan-y;user-select:none}
     /* No animation: pages change instantly when swiped */
     .page{width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center}
     .page img{width:100%;height:100%;object-fit:contain;border-radius:6px}
@@ -53,25 +53,59 @@
 
     const bookId = getParam('book') || '1';
 
-    // Définit le nombre de pages par livre et chemins conseillés
-    const PAGES_PER_BOOK = 4;
-    function imagesForBook(id){
-      // Le script va tenter des chemins locaux images/book{id}/N.jpg puis images/book{id}/N.svg
-      const list = [];
-      for(let i=1;i<=PAGES_PER_BOOK;i++){
-        list.push([`images/book${id}/${i}.jpg`, `images/book${id}/${i}.svg`]);
-      }
-      // fallback placeholders si les locaux ne sont pas trouvés
-      const placeholders = [];
-      for(let i=1;i<=PAGES_PER_BOOK;i++){
-        placeholders.push(`https://via.placeholder.com/600x800?text=Page+${i}`);
-      }
-      return {local:list, placeholders};
+    // Detecte automatiquement les images disponibles pour le livre
+    // Essaye les fichiers N.jpg puis N.svg dans images/book{ id }
+    // Ce code fonctionne côté client en testant l'existence par chargement Image()
+    function discoverImages(id, maxPages = 50){
+      const found = [];
+      let i = 1;
+      return new Promise((resolve) => {
+        function checkNext(){
+          if(i > maxPages){
+            resolve(found);
+            return;
+          }
+
+          const jpg = `images/book${id}/${i}.jpg`;
+          const svg = `images/book${id}/${i}.svg`;
+
+          const probe = new Image();
+          probe.onload = ()=>{ found.push(jpg); i++; checkNext(); };
+          probe.onerror = ()=>{
+            const probeSvg = new Image();
+            probeSvg.onload = ()=>{ found.push(svg); i++; checkNext(); };
+            probeSvg.onerror = ()=>{ i++; checkNext(); };
+            probeSvg.src = svg;
+          };
+          probe.src = jpg;
+        }
+        checkNext();
+      });
     }
 
-    const {local:localImages, placeholders} = imagesForBook(bookId);
-    // Transforme en structure {candidates: [...], fallback}
-    let images = localImages.map((candidates,i)=>({candidates, fallback:placeholders[i]}));
+    // Fallback placeholders si aucun fichier local trouvé
+    function placeholdersFor(count){
+      const placeholders = [];
+      for(let i=1;i<=Math.max(1,count);i++){
+        placeholders.push(`https://via.placeholder.com/600x800?text=Page+${i}`);
+      }
+      return placeholders;
+    }
+
+    // images sera une liste d'objets {candidates: [url,...], fallback}
+    let images = [];
+    (async function initImages(){
+      const discovered = await discoverImages(bookId, 50);
+      if(discovered.length > 0){
+        images = discovered.map(url => ({candidates:[url], fallback: url}));
+      } else {
+        const ph = placeholdersFor(4);
+        images = ph.map((p,i)=>({candidates:[p], fallback:p}));
+      }
+      // Re-initialise l'affichage après découverte
+      idx = 0;
+      setImages(idx);
+    })();
 
     const front = document.getElementById('front');
     const page = document.getElementById('page');
@@ -102,7 +136,7 @@
       if(images[i]){
         loadWithCandidates(front, images[i].candidates, images[i].fallback);
       } else {
-        front.src = placeholders[0];
+        front.src = `https://via.placeholder.com/600x800?text=No+pages`;
       }
 
       // No animation: update instantly
@@ -125,8 +159,7 @@
     document.getElementById('nextBtn').addEventListener('click', next);
     document.getElementById('prevBtn').addEventListener('click', prev);
 
-    // Initialisation
-    setImages(idx);
+    // Initialization is handled after image discovery (initImages)
 
     // Permet navigation clavier
     window.addEventListener('keydown', (e)=>{
@@ -134,43 +167,50 @@
       if(e.key === 'ArrowLeft') prev();
     });
 
-    // --- Touch swipe handling (finger) ---
-    // Requirements: not too sensitive, no animation, almost instant page change.
+    // Pointer-based swipe handling (mouse + touch via Pointer Events)
     (function(){
-      let touchStartX = null;
-      let touchStartY = null;
-      let touchStartTime = 0;
+      let startX = null;
+      let startY = null;
+      let isDown = false;
       const SWIPE_THRESHOLD = 60; // pixels required to trigger
 
-      bookEl.addEventListener('touchstart', (e)=>{
-        if(e.touches.length > 1) return;
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touchStartTime = Date.now();
-      }, {passive:true});
+      // Ensure the browser lets us handle horizontal swipes while allowing vertical scrolling
+      bookEl.style.touchAction = 'pan-y';
 
-      bookEl.addEventListener('touchmove', (e)=>{
-        if(touchStartX === null) return;
-        const dx = e.touches[0].clientX - touchStartX;
-        const dy = e.touches[0].clientY - touchStartY;
-        // If mostly horizontal, prevent vertical page scroll to give better swipe control
+      bookEl.addEventListener('pointerdown', (e)=>{
+        if(!e.isPrimary) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        isDown = true;
+        try{ bookEl.setPointerCapture(e.pointerId); }catch(e){}
+      });
+
+      bookEl.addEventListener('pointermove', (e)=>{
+        if(!isDown) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
         if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10){
           e.preventDefault();
         }
       }, {passive:false});
 
-      bookEl.addEventListener('touchend', (e)=>{
-        if(touchStartX === null) return;
-        const touch = (e.changedTouches && e.changedTouches[0]) || null;
-        if(!touch){ touchStartX = null; return; }
-        const dx = touch.clientX - touchStartX;
-        const dy = touch.clientY - touchStartY;
-        touchStartX = null;
-        // Ignore mostly-vertical moves or small moves
+      function finishPointer(e){
+        if(!isDown) return;
+        isDown = false;
+        try{ if(e && e.pointerId) bookEl.releasePointerCapture(e.pointerId); }catch(e){}
+        const endX = e ? e.clientX : null;
+        const endY = e ? e.clientY : null;
+        if(endX === null || startX === null) { startX = null; startY = null; return; }
+        const dx = endX - startX;
+        const dy = endY - startY;
+        startX = null; startY = null;
         if(Math.abs(dx) < SWIPE_THRESHOLD) return;
         if(Math.abs(dy) > Math.abs(dx)) return;
         if(dx < 0) next(); else prev();
-      }, {passive:true});
+      }
+
+      bookEl.addEventListener('pointerup', finishPointer);
+      bookEl.addEventListener('pointercancel', ()=>{ isDown = false; startX = null; startY = null; });
     })();
   </script>
 </body>
