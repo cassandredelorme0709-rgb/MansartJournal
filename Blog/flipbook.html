@@ -96,6 +96,7 @@
     let images = [];
     (async function initImages(){
       const discovered = await discoverImages(bookId, 50);
+      console.log('flipbook: discovered', discovered.length, discovered);
       if(discovered.length > 0){
         images = discovered.map(url => ({candidates:[url], fallback: url}));
       } else {
@@ -133,6 +134,7 @@
     }
 
     function setImages(i){
+      console.log('flipbook: setImages', i, 'of', images.length);
       if(images[i]){
         loadWithCandidates(front, images[i].candidates, images[i].fallback);
       } else {
