@@ -140,8 +140,10 @@ header {
   max-width: 100%;
   height: auto;
   object-fit: cover;
-  flex: 1;
+  flex: none; /* prevent image from growing when text changes */
   border-radius: 4px;
+  width: 100%;
+  max-height: 160px;
 }
 
 
@@ -301,4 +303,90 @@ body.dark-mode .back-button {
 
 body.dark-mode .back-button:hover {
   background-color: #4a4a4a;
+}
+
+/* Highlight used by search matches */
+.highlight {
+  background-color: #e6e6e6;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0; /* no padding so text doesn't shift */
+  display: inline;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+body.dark-mode .highlight {
+  background-color: rgba(255,255,255,0.08);
+}
+
+/* Responsive: make layout phone-friendly while keeping the same look */
+@media (max-width: 600px) {
+  body {
+    height: auto;
+  }
+
+  header {
+    justify-content: space-between;
+    padding: 0.75rem 0.75rem;
+  }
+
+  #darkModeToggle img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .container {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 0.75rem;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    order: 0;
+  }
+
+  .main {
+    padding: 1rem;
+    order: 1;
+  }
+
+  .news-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem;
+  }
+
+  .news-card {
+    width: 100% !important;
+    max-width: none;
+    aspect-ratio: auto;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .news-card h3 {
+    font-size: 1.05rem;
+  }
+
+  .news-card p {
+    font-size: 0.95rem;
+  }
+
+  .news-card img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .sidebar input {
+    font-size: 1rem;
+  }
 }

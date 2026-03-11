@@ -68,15 +68,49 @@
       window.location.href = page;
     }
 
-    // Recherche
+    // Recherche (supporte titre, mois, année) + mise en surbrillance
     const searchInput = document.getElementById('search');
     const newsCards = document.querySelectorAll('.news-card');
 
+    // sauvegarder le texte original pour pouvoir restaurer
+    newsCards.forEach(card => {
+      const h = card.querySelector('h3');
+      const p = card.querySelector('p');
+      if (h) card.dataset.originalTitle = h.textContent.trim();
+      if (p) card.dataset.originalDate = p.textContent.trim();
+    });
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
+    }
+
+    function highlightText(text, query) {
+      if (!query) return text;
+      const esc = escapeRegExp(query);
+      const regex = new RegExp('(' + esc + ')', 'gi');
+      return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
     searchInput.addEventListener('input', function () {
-      const query = this.value.toLowerCase();
+      const raw = this.value.trim();
+      const query = raw.toLowerCase();
+
       newsCards.forEach(card => {
-        const title = card.dataset.title.toLowerCase();
-        card.style.display = title.includes(query) ? 'block' : 'none';
+        const originalTitle = card.dataset.originalTitle || card.dataset.title || '';
+        const originalDate = card.dataset.originalDate || (card.querySelector('p') && card.querySelector('p').textContent) || '';
+
+        const titleLower = originalTitle.toLowerCase();
+        const dateLower = originalDate.toLowerCase();
+
+        // afficher si le titre OU la date contient la requête
+        const matched = query === '' ? true : (titleLower.includes(query) || dateLower.includes(query));
+        card.style.display = matched ? 'block' : 'none';
+
+        // mettre en surbrillance les parties correspondantes dans le titre et la date
+        const h = card.querySelector('h3');
+        const p = card.querySelector('p');
+        if (h) h.innerHTML = highlightText(originalTitle, raw);
+        if (p) p.innerHTML = highlightText(originalDate, raw);
       });
     });
 
