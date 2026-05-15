@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Newsletter</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+    <header>
+    <button id="darkModeToggle"><img id="themeIcon" src="./Icons/icon-moon.png" alt="Toggle theme" /></button>
+    <h1>Newsletter</h1>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <input type="text" id="search" placeholder="Rechercher un titre..." />
+      <div class="contact-info">
+        <p><strong>Instagram:</strong> @newsletter_mansart</p>
+        <p><strong>Mail:</strong> mansartjournal@gmail.com</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="news-grid" id="newsGrid">
+        <div class="news-card" data-title="Un nouveau journal" data-theme="1" onclick="navigateTo('article1.html')">
+          <h3>Un nouveau journal</h3>
+          <p>Octobre 2025</p>
+           <img src="./Icons/Illu1.jpg?v=1" alt="Image descriptive" />
+        </div>
+
+        <div class="news-card" data-title="Guess who's back" data-theme="2" onclick="navigateTo('article2.html')">
+          <h3>Guess who's back</h3>
+          <p>Novembre 2025</p>
+           <img src="./Icons/Illus2.PNG" alt="Image descriptive" />
+        </div>
+
+        <div class="news-card" data-title="Retour en mars" data-theme="3" onclick="navigateTo('article3.html')">
+          <h3>Retour en mars</h3>
+          <p>Mars 2026</p>
+           <img src="./Icons/Shwirmp.png" alt="Image descriptive" />
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ✅ SCRIPT à placer juste avant </body> -->
+  <script>
+    // Cookie functions
+    function setCookie(name, value, days = 365) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + date.toUTCString();
+      document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) {
+          return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+      }
+      return null;
+    }
+
+    function navigateTo(page) {
+      setCookie('lastPage', page);
+      window.location.href = page;
+    }
+
+    // Recherche (supporte titre, mois, année) + mise en surbrillance
+    const searchInput = document.getElementById('search');
+    const newsCards = document.querySelectorAll('.news-card');
+
+    // sauvegarder le texte original pour pouvoir restaurer
+    newsCards.forEach(card => {
+      const h = card.querySelector('h3');
+      const p = card.querySelector('p');
+      if (h) card.dataset.originalTitle = h.textContent.trim();
+      if (p) card.dataset.originalDate = p.textContent.trim();
+    });
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
+    }
+
+    function highlightText(text, query) {
+      if (!query) return text;
+      const esc = escapeRegExp(query);
+      const regex = new RegExp('(' + esc + ')', 'gi');
+      return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    searchInput.addEventListener('input', function () {
+      const raw = this.value.trim();
+      const query = raw.toLowerCase();
+
+      newsCards.forEach(card => {
+        const originalTitle = card.dataset.originalTitle || card.dataset.title || '';
+        const originalDate = card.dataset.originalDate || (card.querySelector('p') && card.querySelector('p').textContent) || '';
+
+        const titleLower = originalTitle.toLowerCase();
+        const dateLower = originalDate.toLowerCase();
+
+        // afficher si le titre OU la date contient la requête
+        const matched = query === '' ? true : (titleLower.includes(query) || dateLower.includes(query));
+        card.style.display = matched ? 'block' : 'none';
+
+        // mettre en surbrillance les parties correspondantes dans le titre et la date
+        const h = card.querySelector('h3');
+        const p = card.querySelector('p');
+        if (h) h.innerHTML = highlightText(originalTitle, raw);
+        if (p) p.innerHTML = highlightText(originalDate, raw);
+      });
+    });
+
+    // Filtrage par thème
+    function filterTheme(theme) {
+      // Function kept for backward compatibility but no longer used
+    }
+
+    // Mode sombre / clair
+    const toggleButton = document.getElementById('darkModeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(isDark){
+      if(isDark){
+        document.body.classList.add('dark-mode');
+        themeIcon.src = './Icons/icon-sun.png';
+        localStorage.setItem('theme','dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        themeIcon.src = './Icons/icon-moon.png';
+        localStorage.setItem('theme','light');
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setTheme(!document.body.classList.contains('dark-mode'));
+    });
+
+    // Fallback if custom icons are missing
+    themeIcon.onerror = () => { themeIcon.src = './Icons/LogoFox.png'; };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      setTheme(savedTheme === 'dark');
+    });
+  </script>
+
+</body>
+</html>

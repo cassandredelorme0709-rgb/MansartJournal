@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Retour en mars</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <header>
+    <button id="darkModeToggle"><img id="themeIcon" src="./Icons/icon-moon.png" alt="Toggle theme" /></button>
+    <h1>Retour en mars</h1>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <button class="back-button" onclick="window.location.href='index.html'">← Retour</button>
+    </aside>
+
+    <main class="main">
+      <article class="news-article">
+        <h2>Retour en mars</h2>
+        <div class="article-category">Mars 2026 - Édition #3</div>
+        
+        <img src="./Icons/Shwirmp.png" alt="Retour en mars" />
+        
+        <p>
+          Bonjour à toutes et tous, fidèle lectorat !
+        </p>
+        
+        <p>
+          Mars 2026 marque une nouvelle étape pour notre journal. Après les premières éditions d’automne, nous revenons avec des sujets encore plus variés et un regard curieux sur le monde qui nous entoure. Ce mois-ci, nous parlons de culture, de science, et de petites histoires locales qui font la richesse de notre quotidien.
+        </p>
+        
+        <p>
+          Nous espérons que ce numéro vous apportera autant de plaisir à lire qu’il nous a apporté de plaisir à écrire. Merci de continuer cette aventure avec nous, et à très vite pour de nouvelles découvertes.
+        </p>
+        <p>
+            -L'équipe de rédaction
+        </p>
+        <div class="book-link" style="margin-top:12px">
+          <a href="flipbook.html?book=3" class="open-book">Voir le flipbook associé →</a>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    // Mode sombre / clair
+    const toggleButton = document.getElementById('darkModeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(isDark){
+      if(isDark){
+        document.body.classList.add('dark-mode');
+        themeIcon.src = './Icons/icon-sun.png';
+        localStorage.setItem('theme','dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        themeIcon.src = './Icons/icon-moon.png';
+        localStorage.setItem('theme','light');
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setTheme(!document.body.classList.contains('dark-mode'));
+    });
+
+    // Fallback if custom icons are missing
+    themeIcon.onerror = () => { themeIcon.src = './Icons/LogoFox.png'; };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      setTheme(savedTheme === 'dark');
+    });
+  </script>
+
+</body>
+</html>

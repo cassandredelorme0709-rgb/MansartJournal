@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Guess who's back</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <header>
+    <button id="darkModeToggle"><img id="themeIcon" src="./Icons/icon-moon.png" alt="Toggle theme" /></button>
+    <h1>Guess who's back</h1>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <button class="back-button" onclick="window.location.href='index.html'">← Retour</button>
+    </aside>
+
+    <main class="main">
+      <article class="news-article">
+        <h2>Guess who's back</h2>
+        <div class="article-category">Novembre 2025 - Édition #2</div>
+        
+        <img src="./Icons/Illus2.PNG" alt="Guess who's back" />
+        
+        <p>
+         Bonjour à vous cher.e.s lecteur.trice.s!
+        </p>
+        
+        <p>
+         Les vacances ont à peine commencé que des dramas tombent dès le dimanche 19 octobre. La panne des réseaux sociaux, le cambriolage au Louvre et ces deux évènements se sont produits plus rapidement que le premier gouvernement de Lecornu. Allardons nous quand même un peu sur ce cambriolage. A 9h30, il a fallu 7 minutes pour cambrioler le plus grand musée de France pendant que nous faisions tous nos meilleures grasses matinée. Les cambrioleurs ont pu accéder à la salle d'Apollon à l'aide d'un monte-charge et ils sont repartis à l'aide de scooter, très discrètement. Évidemment! sinon on aurait beaucoup plus facilement pu les arrêter. Non plus sérieusement, ce cambriolage soulève la problématique du manque de moyen mis en place pour la conservation et l'entretien des œuvres. Celui-ci étant dû au peu de budget pour les musées qui ont déjà signalé ce problème. Malgré cela, on espère que vous vous êtes assez reposé pendant ces vacances pour entamer cette période de cours et éviter de traumaliser nos pauvres profs de maths qui doivent subir notre bêtise quotidienne. C'est plus le moment guys, Halloween c'est fini faudra attendre l'année prochaine. Sur ce, on vous souhaite une bonne lecture!
+        </p>
+        
+        <p>
+        -L'équipe de rédaction
+        </p>
+        <div class="book-link" style="margin-top:12px">
+          <a href="flipbook.html?book=2" class="open-book">Voir le flipbook associé →</a>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    // Mode sombre / clair
+    const toggleButton = document.getElementById('darkModeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(isDark){
+      if(isDark){
+        document.body.classList.add('dark-mode');
+        themeIcon.src = './Icons/icon-sun.png';
+        localStorage.setItem('theme','dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        themeIcon.src = './Icons/icon-moon.png';
+        localStorage.setItem('theme','light');
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setTheme(!document.body.classList.contains('dark-mode'));
+    });
+
+    // Fallback if custom icons are missing
+    themeIcon.onerror = () => { themeIcon.src = './Icons/LogoFox.png'; };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      setTheme(savedTheme === 'dark');
+    });
+  </script>
+
+</body>
+</html>

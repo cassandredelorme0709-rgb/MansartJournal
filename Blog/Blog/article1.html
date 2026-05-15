@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Un nouveau journal</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <header>
+    <button id="darkModeToggle"><img id="themeIcon" src="./Icons/icon-moon.png" alt="Toggle theme" /></button>
+    <h1>Un nouveau journal</h1>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <button class="back-button" onclick="window.location.href='index.html'">← Retour</button>
+    </aside>
+
+    <main class="main">
+      <article class="news-article">
+        <h2>Un nouveau journal</h2>
+        <div class="article-category">Octobre 2025 - Édition #1</div>
+        
+        <img src="./Icons/Illu1.jpg?v=1" alt="Un nouveau journal" />
+        
+        <p>
+          Bonjour à tou·te·s, cher·e·s lecteur·rice·s !
+        </p>
+        
+        <p>
+          Ça y est, le premier numéro est sorti ! Toute l’équipe est très heureuse et fière de partager avec vous
+le fruit de ce premier mois de travail. Après un mois chargé, les vacances approchent, l’automne est
+là et c’est le moment parfait pour vous offrir une lecture à la fois légère et, on l’espère, enrichissante.
+Notre idée ? Créer un espace où l’on s’informe, mais aussi où l’on prend plaisir à découvrir des
+sujets variés : de la culture, de l’actualité, et des créations qui reflètent la vie de notre lycée.
+Dans ce numéro, vous pourrez découvrir un article sur votre famille iconique préférée, une BD par
+nos cher STD2A sur un vampire, et nos recommandations cinéma idéales pour un week-end sous la
+couette.
+        </p>
+        
+        <p>
+         Bonne lecture à tou·te·s, et bienvenue dans l’aventure de notre journal !
+        </p>
+        <p>
+            -L'équipe de rédaction
+        </p>
+        <div class="book-link" style="margin-top:12px">
+          <a href="flipbook.html?book=1" class="open-book">Voir le flipbook associé →</a>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    // Mode sombre / clair
+    const toggleButton = document.getElementById('darkModeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(isDark){
+      if(isDark){
+        document.body.classList.add('dark-mode');
+        themeIcon.src = './Icons/icon-sun.png';
+        localStorage.setItem('theme','dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        themeIcon.src = './Icons/icon-moon.png';
+        localStorage.setItem('theme','light');
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setTheme(!document.body.classList.contains('dark-mode'));
+    });
+
+    // Fallback if custom icons are missing
+    themeIcon.onerror = () => { themeIcon.src = './Icons/LogoFox.png'; };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      setTheme(savedTheme === 'dark');
+    });
+  </script>
+
+</body>
+</html>

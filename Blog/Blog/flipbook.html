@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Flipbook</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+  <style>
+    /* Use site's global font and colors from index.css; keep only flipbook-specific rules */
+    :root{--flipbook-gap:12px}
+    .book-wrap{display:flex;flex-direction:column;align-items:center;margin-top:18px}
+    .book{width:85vw;max-width:900px;height:85vh;max-height:1100px;aspect-ratio:auto;touch-action:pan-y;user-select:none}
+    /* No animation: pages change instantly when swiped */
+    .page{width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center}
+    .page img{width:100%;height:100%;object-fit:contain;border-radius:6px}
+    .controls{margin-top:12px;display:flex;gap:8px}
+    .note{max-width:700px;margin-top:12px;color:var(--muted,#555)}
+    /* Make control buttons follow site button style but stay compact */
+    .controls button{background-color:#f4f4f4;border:1px solid #ccc;border-radius:4px;padding:0.5rem 0.9rem;margin:0 4px;font-size:1rem;cursor:pointer;transition:background-color 0.2s}
+    .controls button:hover{background-color:#eaeaea}
+    body.dark-mode .controls button{background-color:#3a3a3a;border:1px solid #555;color:#eee}
+    body.dark-mode .controls button:hover{background-color:#4a4a4a}
+    @media (max-width:700px){.book{width:90vw;height:60vh;max-width:500px;max-height:600px}}
+  </style>
+</head>
+<body>
+  <header>
+    <button class="back-button" onclick="window.location.href='index.html'">← Retour</button>
+    <h1>Flipbook</h1>
+  </header>
+
+  <div class="book-wrap">
+    <div id="book" class="book">
+      <div id="page" class="page">
+        <img id="front" src="" alt="Page front">
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="prevBtn">Préc.</button>
+      <button id="nextBtn">Suiv.</button>
+    </div>
+
+    <div id="note" class="note"></div>
+
+  <script>
+    // Récupère paramètre book de l'URL
+    function getParam(name){
+      const params = new URLSearchParams(location.search);
+      return params.get(name);
+    }
+
+    const bookId = getParam('book') || '1';
+
+    // Detecte automatiquement les images disponibles pour le livre
+    // Essaye les fichiers N.jpg puis N.svg dans images/book{ id }
+    // Ce code fonctionne côté client en testant l'existence par chargement Image()
+    function discoverImages(id, maxPages = 50){
+      const found = [];
+      let i = 1;
+      return new Promise((resolve) => {
+        function checkNext(){
+          if(i > maxPages){
+            resolve(found);
+            return;
+          }
+
+          const jpg = `images/book${id}/${i}.jpg`;
+          const svg = `images/book${id}/${i}.svg`;
+
+          const probe = new Image();
+          probe.onload = ()=>{ found.push(jpg); i++; checkNext(); };
+          probe.onerror = ()=>{
+            const probeSvg = new Image();
+            probeSvg.onload = ()=>{ found.push(svg); i++; checkNext(); };
+            probeSvg.onerror = ()=>{ i++; checkNext(); };
+            probeSvg.src = svg;
+          };
+          probe.src = jpg;
+        }
+        checkNext();
+      });
+    }
+
+    // Fallback placeholders si aucun fichier local trouvé
+    function placeholdersFor(count){
+      const placeholders = [];
+      for(let i=1;i<=Math.max(1,count);i++){
+        placeholders.push(`https://via.placeholder.com/600x800?text=Page+${i}`);
+      }
+      return placeholders;
+    }
+
+    // images sera une liste d'objets {candidates: [url,...], fallback}
+    let images = [];
+    (async function initImages(){
+      const discovered = await discoverImages(bookId, 50);
+      console.log('flipbook: discovered', discovered.length, discovered);
+      if(discovered.length > 0){
+        images = discovered.map(url => ({candidates:[url], fallback: url}));
+      } else {
+        const ph = placeholdersFor(4);
+        images = ph.map((p,i)=>({candidates:[p], fallback:p}));
+      }
+      // Re-initialise l'affichage après découverte
+      idx = 0;
+      setImages(idx);
+    })();
+
+    const front = document.getElementById('front');
+    const page = document.getElementById('page');
+    const note = document.getElementById('note');
+    const bookEl = document.getElementById('book');
+
+    let idx = 0;
+
+    // Apply site theme (dark mode) if previously set
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+
+    function loadWithCandidates(imgElement, candidates, fallback){
+      let idxTry = 0;
+      function tryNext(){
+        if(idxTry >= candidates.length){
+          if(imgElement.src !== fallback) imgElement.src = fallback;
+          return;
+        }
+        imgElement.onerror = ()=>{ idxTry++; tryNext(); };
+        imgElement.src = candidates[idxTry];
+      }
+      tryNext();
+    }
+
+    function setImages(i){
+      console.log('flipbook: setImages', i, 'of', images.length);
+      if(images[i]){
+        loadWithCandidates(front, images[i].candidates, images[i].fallback);
+      } else {
+        front.src = `https://via.placeholder.com/600x800?text=No+pages`;
+      }
+
+      // No animation: update instantly
+      note.textContent = `Livre ${bookId} — page ${i+1}/${Math.max(images.length,1)}`;
+    }
+
+    // Instant page change (no animation)
+    function next(){
+      if(idx >= images.length-1) return;
+      idx = Math.min(idx+1, images.length-1);
+      setImages(idx);
+    }
+
+    function prev(){
+      if(idx <= 0) return;
+      idx = Math.max(idx-1,0);
+      setImages(idx);
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', next);
+    document.getElementById('prevBtn').addEventListener('click', prev);
+
+    // Initialization is handled after image discovery (initImages)
+
+    // Permet navigation clavier
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowRight') next();
+      if(e.key === 'ArrowLeft') prev();
+    });
+
+    // Pointer-based swipe handling (mouse + touch via Pointer Events)
+    (function(){
+      let startX = null;
+      let startY = null;
+      let isDown = false;
+      const SWIPE_THRESHOLD = 60; // pixels required to trigger
+
+      // Ensure the browser lets us handle horizontal swipes while allowing vertical scrolling
+      bookEl.style.touchAction = 'pan-y';
+
+      bookEl.addEventListener('pointerdown', (e)=>{
+        if(!e.isPrimary) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        isDown = true;
+        try{ bookEl.setPointerCapture(e.pointerId); }catch(e){}
+      });
+
+      bookEl.addEventListener('pointermove', (e)=>{
+        if(!isDown) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10){
+          e.preventDefault();
+        }
+      }, {passive:false});
+
+      function finishPointer(e){
+        if(!isDown) return;
+        isDown = false;
+        try{ if(e && e.pointerId) bookEl.releasePointerCapture(e.pointerId); }catch(e){}
+        const endX = e ? e.clientX : null;
+        const endY = e ? e.clientY : null;
+        if(endX === null || startX === null) { startX = null; startY = null; return; }
+        const dx = endX - startX;
+        const dy = endY - startY;
+        startX = null; startY = null;
+        if(Math.abs(dx) < SWIPE_THRESHOLD) return;
+        if(Math.abs(dy) > Math.abs(dx)) return;
+        if(dx < 0) next(); else prev();
+      }
+
+      bookEl.addEventListener('pointerup', finishPointer);
+      bookEl.addEventListener('pointercancel', ()=>{ isDown = false; startX = null; startY = null; });
+    })();
+  </script>
+</body>
+</html>
