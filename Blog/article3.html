@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Printemps</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <header>
+    <button id="darkModeToggle"><img id="themeIcon" src="./Icons/icon-moon.png" alt="Toggle theme" /></button>
+    <h1>Printemps</h1>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <button class="back-button" onclick="window.location.href='index.html'">← Retour</button>
+    </aside>
+
+    <main class="main">
+      <article class="news-article">
+        <h2>Printemps</h2>
+        <div class="article-category">Mars 2026 - Édition #3</div>
+        
+        <img src="./images/book3/1.jpg" alt="Printemps" />
+        
+        <p>
+          Bonjours à toutes, cheres lecteur-rice-s !
+        </p>
+        
+        <p>
+          On s'excuse de ne pas avoir pu publier plus tôt. Le journal était lui aussi en pleine épreuve : entre les bacs blancs, les montagnes de crêpes de la Chandeleur et notre ennemi national, Parcoursup, où le démon remplit de vice, il a fallu survivre. Mais nous voilà de retour, plus determiné-e-s que jamais À l'image de Alysa Liu, révélation éclatante des Jeux, nous comptons revenir plus fort-e-s, plus précis e-s et plus affûté-e-s dans nos pirouettes éditoriales. Ici, pas de dossiers façon Epstein files: seulement de la clarté, de l'analyse et un regard critique sur l'actualité.
+        </p>
+        
+        <p>
+          Côté géopolitique, l'absurde n'est jamais bien loin. Donald Trump a de nouveau évoqué son intéret pour le Groenland, officiellement pour ses ressources stratégiques et sa position clé en Arctique. Il ne s'agissait absolument pas d'y construire un nouveau terrain de golf, loin de la, il veut seulement percer le secret ancestral de leur recette de glace aussi rare que les cités d'or. Pendant que certaine-s rejouent au Monopoly grandeur nature, la banquise, elle, continue de fondre, et ce n'est malheureusement pas une métaphore.
+        </p>
+        <p>
+            Pour ce printemps, nous vous préparons de nombreuses nouveautés: davantage d'articles. de review et l'arrivée du blog. OMG! À la fin du journal, un QR code vous attend: scannez-le et vous serez directement redirigé-e-s vers ce nouvel espace.
+        </p>
+        <p>
+            Le CVL vous prépare également plusieurs journées à thème culture, Journée internationale des droits des femmes, et bien d'autres encore. Nous espérons votre mobilisation.    
+        </p>
+        <p>
+            À bientôt
+        </p>
+        <p>
+            -L'équipe de rédaction
+        </p>
+        <div class="book-link" style="margin-top:12px">
+          <a href="flipbook.html?book=3" class="open-book">Voir le flipbook associé →</a>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    // Mode sombre / clair
+    const toggleButton = document.getElementById('darkModeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(isDark){
+      if(isDark){
+        document.body.classList.add('dark-mode');
+        themeIcon.src = './Icons/icon-sun.png';
+        localStorage.setItem('theme','dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        themeIcon.src = './Icons/icon-moon.png';
+        localStorage.setItem('theme','light');
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setTheme(!document.body.classList.contains('dark-mode'));
+    });
+
+    // Fallback if custom icons are missing
+    themeIcon.onerror = () => { themeIcon.src = './Icons/LogoFox.png'; };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      setTheme(savedTheme === 'dark');
+    });
+  </script>
+
+</body>
+</html>
