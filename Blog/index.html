@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1"/>
   <title>Newsletter</title>
   <link rel="shortcut icon" href="./Icons/LogoFox.png">
   <link rel="stylesheet" href="index.css">
@@ -26,22 +26,25 @@
 
     <main class="main">
       <div class="news-grid" id="newsGrid">
+        <div class="news-card" data-title="Bientôt l'été" data-theme="4" onclick="navigateTo('article4.html')">
+          <h3>Bientôt l'été</h3>
+          <p>Mai 2026</p>
+          <img src="./images/book4/1.jpg?v=1" alt="Image descriptive" loading="lazy" />
+        </div>
         <div class="news-card" data-title="Printemps" data-theme="3" onclick="navigateTo('article3.html')">
           <h3>Printemps</h3>
           <p>Mars 2026</p>
-           <img src="./Images/book3/1.jpg?v=1" alt="Image descriptive" />
+          <img src="./images/book3/1.jpg?v=1" alt="Image descriptive" loading="lazy" />
         </div>
-
         <div class="news-card" data-title="Guess who's back" data-theme="2" onclick="navigateTo('article2.html')">
           <h3>Guess who's back</h3>
           <p>Novembre 2025</p>
-           <img src="./Icons/Illus2.PNG" alt="Image descriptive" />
+          <img src="./Icons/Illus2.PNG" alt="Image descriptive" loading="lazy" />
         </div>
-
         <div class="news-card" data-title="Un nouveau journal" data-theme="1" onclick="navigateTo('article1.html')">
           <h3>Un nouveau journal</h3>
           <p>Octobre 2025</p>
-           <img src="./Icons/Illu1.jpg?v=1" alt="Image descriptive" />
+          <img src="./Icons/Illu1.jpg?v=1" alt="Image descriptive" loading="lazy" />
         </div>
       </div>
     </main>

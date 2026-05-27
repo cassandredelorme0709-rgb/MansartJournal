@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1, user-scalable=yes, minimum-scale=1, maximum-scale=5" />
   <title>Flipbook</title>
   <link rel="shortcut icon" href="./Icons/LogoFox.png">
   <link rel="stylesheet" href="index.css">
@@ -10,7 +10,7 @@
     /* Use site's global font and colors from index.css; keep only flipbook-specific rules */
     :root{--flipbook-gap:12px}
     .book-wrap{display:flex;flex-direction:column;align-items:center;margin-top:18px}
-    .book{width:85vw;max-width:900px;height:85vh;max-height:1100px;aspect-ratio:auto;touch-action:pan-y;user-select:none}
+    .book{width:85vw;max-width:900px;height:85vh;max-height:1100px;aspect-ratio:auto;user-select:none}
     /* No animation: pages change instantly when swiped */
     .page{width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center}
     .page img{width:100%;height:100%;object-fit:contain;border-radius:6px}
@@ -54,32 +54,25 @@
     const bookId = getParam('book') || '1';
 
     // Detecte automatiquement les images disponibles pour le livre
-    // Essaye les fichiers N.jpg puis N.svg dans images/book{ id }
-    // Ce code fonctionne côté client en testant l'existence par chargement Image()
-    function discoverImages(id, maxPages = 50){
+    // Loads only the current, next, and previous images for fast navigation
+    function imageUrl(id, page) {
+      return `images/book${id}/${page}.jpg`;
+    }
+
+    // Discover only the first image initially
+    async function discoverImages(id) {
       const found = [];
-      let i = 1;
+      const probe = new Image();
+      const url = imageUrl(id, 1);
       return new Promise((resolve) => {
-        function checkNext(){
-          if(i > maxPages){
-            resolve(found);
-            return;
-          }
-
-          const jpg = `images/book${id}/${i}.jpg`;
-          const svg = `images/book${id}/${i}.svg`;
-
-          const probe = new Image();
-          probe.onload = ()=>{ found.push(jpg); i++; checkNext(); };
-          probe.onerror = ()=>{
-            const probeSvg = new Image();
-            probeSvg.onload = ()=>{ found.push(svg); i++; checkNext(); };
-            probeSvg.onerror = ()=>{ i++; checkNext(); };
-            probeSvg.src = svg;
-          };
-          probe.src = jpg;
-        }
-        checkNext();
+        probe.onload = () => {
+          found.push(url);
+          resolve(found);
+        };
+        probe.onerror = () => {
+          resolve([]);
+        };
+        probe.src = url;
       });
     }
 
@@ -95,18 +88,44 @@
     // images sera une liste d'objets {candidates: [url,...], fallback}
     let images = [];
     (async function initImages(){
-      const discovered = await discoverImages(bookId, 50);
+      const discovered = await discoverImages(bookId);
       console.log('flipbook: discovered', discovered.length, discovered);
       if(discovered.length > 0){
-        images = discovered.map(url => ({candidates:[url], fallback: url}));
+        images = [{candidates:[discovered[0]], fallback: discovered[0]}];
       } else {
         const ph = placeholdersFor(4);
         images = ph.map((p,i)=>({candidates:[p], fallback:p}));
       }
-      // Re-initialise l'affichage après découverte
       idx = 0;
       setImages(idx);
+      // Preload next page if exists
+      preloadPage(idx + 1);
     })();
+
+    // Preload image for a given page number (1-based)
+    function preloadPage(pageNum) {
+      if(pageNum < 1) return;
+      const url = imageUrl(bookId, pageNum + 1);
+      const img = new Image();
+      img.src = url;
+    }
+
+    // Dynamically check and add next page when flipping forward
+    async function tryAddNextPage(currentIdx) {
+      const nextPageNum = currentIdx + 2; // idx is 0-based, page numbers are 1-based
+      const url = imageUrl(bookId, nextPageNum);
+      return new Promise((resolve) => {
+        const probe = new Image();
+        probe.onload = () => {
+          images.push({candidates:[url], fallback:url});
+          resolve(true);
+        };
+        probe.onerror = () => {
+          resolve(false);
+        };
+        probe.src = url;
+      });
+    }
 
     const front = document.getElementById('front');
     const page = document.getElementById('page');
@@ -135,19 +154,30 @@
 
     function setImages(i){
       console.log('flipbook: setImages', i, 'of', images.length);
-      if(images[i]){
-        loadWithCandidates(front, images[i].candidates, images[i].fallback);
-      } else {
+      const url = imageUrl(bookId, i + 1);
+      const probe = new Image();
+      probe.onload = () => {
+        front.src = url;
+      };
+      probe.onerror = () => {
         front.src = `https://via.placeholder.com/600x800?text=No+pages`;
-      }
+      };
+      probe.src = url;
 
-      // No animation: update instantly
-      note.textContent = `Livre ${bookId} — page ${i+1}/${Math.max(images.length,1)}`;
+      // Preload next and previous pages
+      preloadPage(i + 1);
+      preloadPage(i - 1);
+
+      note.textContent = `Livre ${bookId} — page ${i+1}`;
     }
 
     // Instant page change (no animation)
-    function next(){
-      if(idx >= images.length-1) return;
+    async function next(){
+      if(idx === images.length-1) {
+        // Try to add next page if it exists
+        const added = await tryAddNextPage(idx);
+        if(!added) return; // No more pages
+      }
       idx = Math.min(idx+1, images.length-1);
       setImages(idx);
     }

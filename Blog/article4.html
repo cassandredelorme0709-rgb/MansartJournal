@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bientôt l'été</title>
+  <link rel="shortcut icon" href="./Icons/LogoFox.png">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <header>
+    <button id="darkModeToggle"><img id="themeIcon" src="./Icons/icon-moon.png" alt="Toggle theme" /></button>
+    <h1>Bientôt l'été</h1>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <button class="back-button" onclick="window.location.href='index.html'">← Retour</button>
+    </aside>
+
+    <main class="main">
+      <article class="news-article">
+        <h2>Bientôt l'été</h2>
+        <div class="article-category">Mai 2026 - Édition #4</div>
+        
+        <img src="./images/book4/1.jpg" alt="Bientôt l'été" />
+        
+        <p>
+          Bonjours à toutes, cheres lecteur-rice-s !
+        </p>
+        
+        <p>
+            Pas de message de la rédaction dans cet article (du moins je n'en ai pas trouvé), mais je tiens à quand même mettre en valeur tout le travail fournit par l'équipe, le directeur et surtout la rédactice en chef, qui n'ont jamais laché l'affaire malgré les difficultés rencontrées. Merci à eux pour leur investissement et leur passion, qui font vivre ce journal et nous permettent de continuer à partager nos idées et nos analyses avec vous.
+        </p>
+        <p>
+            -La Responsable du Blog
+        </p>
+        <div class="book-link" style="margin-top:12px">
+          <a href="flipbook.html?book=4" class="open-book">Voir le flipbook associé →</a>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    // Mode sombre / clair
+    const toggleButton = document.getElementById('darkModeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(isDark){
+      if(isDark){
+        document.body.classList.add('dark-mode');
+        themeIcon.src = './Icons/icon-sun.png';
+        localStorage.setItem('theme','dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        themeIcon.src = './Icons/icon-moon.png';
+        localStorage.setItem('theme','light');
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      setTheme(!document.body.classList.contains('dark-mode'));
+    });
+
+    // Fallback if custom icons are missing
+    themeIcon.onerror = () => { themeIcon.src = './Icons/LogoFox.png'; };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      setTheme(savedTheme === 'dark');
+    });
+  </script>
+
+</body>
+</html>
